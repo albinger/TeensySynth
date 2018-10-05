@@ -2,7 +2,8 @@
 // LFO Test
 // By Notes and Volts
 // www.notesandvolts.com
-
+#define ENC_DECODER ENK_FLAKY
+#define ENC_HALFSTEP
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
@@ -18,24 +19,27 @@ Adafruit_SSD1306 display(OLED_RESET);
 
 
 // GUItool: begin automatically generated code
-AudioSynthWaveform       waveform2;      //xy=382,453
-AudioSynthWaveform       waveform1;      //xy=386,394
-AudioSynthNoisePink      pink1;          //xy=394,504
-AudioMixer4              mixer1;         //xy=577,454
-AudioFilterStateVariable filter1;        //xy=725,457
-AudioEffectEnvelope      envelope1;      //xy=888,458
-AudioSynthSimpleDrum     drum1;          //xy=196,679
-AudioOutputI2S           i2s1;           //xy=1049,465
-AudioConnection          patchCord8(drum1, 0, mixer1, 3);
-AudioConnection          patchCord1(waveform2, 0, mixer1, 1);
-AudioConnection          patchCord2(waveform1, 0, mixer1, 0);
-AudioConnection          patchCord3(pink1, 0, mixer1, 2);
-AudioConnection          patchCord4(mixer1, 0, filter1, 0);
-AudioConnection          patchCord5(filter1, 0, envelope1, 0);
-AudioConnection          patchCord6(envelope1, 0, i2s1, 0);
-AudioConnection          patchCord7(envelope1, 0, i2s1, 1);
-AudioControlSGTL5000     sgtl5000_1;     //xy=565,556
+AudioSynthSimpleDrum     drum1;          //xy=241,352
+AudioSynthWaveform       waveform2;      //xy=427,126
+AudioSynthWaveform       waveform1;      //xy=431,67
+AudioSynthNoisePink      pink1;          //xy=439,177
+AudioMixer4              mixer1;         //xy=622,127
+AudioFilterStateVariable filter1;        //xy=770,130
+AudioEffectEnvelope      envelope1;      //xy=933,131
+AudioMixer4              mainmix;         //xy=1094,94
+AudioOutputI2S           i2s1;           //xy=1236,83
+AudioConnection          patchCord1(drum1, 0, mixer1, 3);
+AudioConnection          patchCord2(waveform2, 0, mixer1, 1);
+AudioConnection          patchCord3(waveform1, 0, mixer1, 0);
+AudioConnection          patchCord4(pink1, 0, mixer1, 2);
+AudioConnection          patchCord5(mixer1, 0, filter1, 0);
+AudioConnection          patchCord6(filter1, 0, envelope1, 0);
+AudioConnection          patchCord7(envelope1, 0, mainmix, 0);
+AudioConnection          patchCord8(mainmix, 0, i2s1, 0);
+AudioConnection          patchCord9(mainmix, 0, i2s1, 1);
+AudioControlSGTL5000     sgtl5000_1;     //xy=610,229
 // GUItool: end automatically generated code
+
 
 
 
@@ -61,6 +65,7 @@ int FILfreq =  10000;
 float FILfactor = 1;
 
 char string[40];
+char string2[40];
 int timecounter = 0;
 int changecounter = 0;
 
@@ -69,46 +74,48 @@ int16_t last, value;
 int shift = 0;
 
 byte sysExVal[] = {
+  127, // volume
   127, //osc 1 gain
   127, //osc 2 gain
   0,   //noise gain
   2,   //octave
-  10,  //attack
-  80,  //delay
-  80,  //sustain
-  20,  //release
-  1,   //waveform1
+  0,  //attack
+  0,  //decay
+  1,  //sustain
+  21,  //release
+  2,   //waveform1
   2,   //waveform2
   6,   //detune
-  40,  //fliter freq
-  40,  //filter resonance
+  127,  //fliter freq
+  1,  //filter resonance
   2,   //bend range
-  40,  //lfo speed
+  29,  //lfo speed
   40,  //lfo depth
   0   //lfo mode
 };
 
 const char* sysExNam[] {
-  "osc1 vol",
-  "osc2 vol",
-  "noiseVol",
-  "octave  ",
-  "attack  ",
-  "delay   ",
-  "sustain ",
-  "release ",
-  "wavefrm1",
-  "wavefrm2",
-  "detune  ",
-  "filter f",
-  "filter r",
-  "bend rng",
-  "lfo sped",
-  "lfo dpth",
-  "lfo mode"
+  " Volume  ",
+  "Osc1 gain",
+  "Osc2 gain",
+  " Noise   ",
+  " Octave  ",
+  " Attack  ",
+  " Decay   ",
+  " Sustain ",
+  " Release ",
+  "Waveform1",
+  "Waveform2",
+  " Detune  ",
+  "Filter Fr",
+  "Filter Ra",
+  "Bend rang",
+  "LFO speed",
+  "LFO depth",
+  " LFO mode"
 };
 
-const byte CC[] = { 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116 };
+const byte CC[] = { 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116 };
 
 
 
@@ -149,12 +156,13 @@ void setup() {
   mixer1.gain(0, 1.0);
   mixer1.gain(1, 1.0);
   mixer1.gain(2, 0.0);
-  mixer1.gain(3, 1.0);
+  mixer1.gain(3, 0.0);
 
   envelope1.attack(0);
   envelope1.decay(0);
   envelope1.sustain(1);
   envelope1.release(500);
+  mainmix.gain(0, 1.0);
 
   //Wire.setSDA(19);
   //Wire.setSCL(18);
@@ -164,7 +172,7 @@ void setup() {
   display.setTextSize(2);
   display.setTextColor(WHITE, BLACK);
   display.setTextWrap(false);
-  sprintf(string, "Teensy\n Synth");
+  sprintf(string, "Teensy  \n Synth  ");
   //display.clearDisplay();
 
   encoder = new ClickEncoder(1, 0, 2);
@@ -177,11 +185,14 @@ void setup() {
 
 void loop() {
   static int menu = 0;
+
   usbMIDI.read();
   LFOupdate(false, LFOmodeSelect, FILfactor, LFOdepth);
   int now = millis();
 
   value = encoder->getValue();
+
+
   ClickEncoder::Button b = encoder->getButton();
 
 
@@ -195,34 +206,74 @@ void loop() {
     } else if (value < 0) {
       menu--;
     }
-    if (menu > 16) {
+    if (menu > 17) {
       menu = 0;
     } else if (menu < 0) {
-      menu = 16;
+      menu = 17;
     }
 
+    if (value != 0) {
 
-    sprintf(string, "%s\n%d", sysExNam[menu], sysExVal[menu]);
 
+
+      sprintf(string, "%s", sysExNam[menu]);
+      sprintf(string2, "%d", sysExVal[menu]);
+    }
   } else {
     display.setTextColor(WHITE, BLACK);
     if (value != 0) {
+      if (sysExVal[menu] == 0 && value < 0) {
+        value = 0;
+      }
       sysExVal[menu] += value;
+      switch (menu) {
+        case 4:
+          if ( sysExVal[4] > 4) {
+            sysExVal[4] = 4;
+          }
+          break;
 
-      //display.setTextColor(WHITE, BLACK);
-      //sprintf(string, "%s\nshift:%d", sysExNam[menu], sysExVal[menu]);
-      myControlChange(7, CC[menu], sysExVal[menu]);
+        case 9:
+          if (sysExVal[menu] > 3) {
+            sysExVal[menu] = 3;
+          }
+          break;
+        case  10:
+          if (sysExVal[menu] > 3) {
+            sysExVal[menu] = 3;
+          }
+
+
+          break;
+        case  11:
+          if (sysExVal[menu] > 13) {
+            sysExVal[menu] = 13;
+          }
+          break;
+      }
+
+      if (sysExVal[menu] < 0) {
+        sysExVal[menu] = 0;
+      } else {
+        if (sysExVal[menu] > 127) {
+          sysExVal[menu] = 127;
+        }
+
+        myControlChange(7, CC[menu], sysExVal[menu]);
+      }
     }
   }
   if ((now - timecounter) > 60) {
     //display.clearDisplay();
     display.setCursor(0, 0);
-    display.print("        \n        ");
+    display.print("         \n         ");
     display.setCursor(0, 0);
     if (shift) {
       display.setTextColor(BLACK, WHITE);
     }
-    display.print(string);
+    display.println(string);
+    display.setTextColor(WHITE, BLACK);
+    display.print(string2);
     display.display();
     timecounter = now;
   }
@@ -233,9 +284,9 @@ void myNoteOn(byte channel, byte note, byte velocity) {
     if (channel == 2) {
       display.setTextColor(WHITE, BLACK);
       display.setCursor(4, 48);
-      display.print("d:");
+      display.print("d: ");
       display.print(note);
-      display.print(" v:");
+      display.print(" v: ");
       display.print(velocity);
       display.display();
       drum1.frequency(550);
@@ -274,8 +325,9 @@ void keyBuff(byte note, bool playNote) {
     oscPlay(note);
     buff[buffSize] = note;
     buffSize++;
-    display.setTextColor(WHITE, BLACK);
+
     display.setCursor(4, 48);
+    display.setTextColor(WHITE, BLACK);
     display.print("note: ");
     display.print(noteNames[buff[buffSize - 1] % 12]);
     display.print(buff[buffSize - 1] / 12 - 1);
@@ -301,7 +353,7 @@ void keyBuff(byte note, bool playNote) {
           display.print("note: ");
           display.print(noteNames[buff[buffSize - 1] % 12]);
           display.print(buff[buffSize - 1] / 12 - 1);
-          display.print("   ");
+          display.print("     ");
           display.display();
           return;
         }
@@ -309,14 +361,18 @@ void keyBuff(byte note, bool playNote) {
           oscStop();
           int now = millis();
           if ((now - changecounter) > 5000) {
-            display.fillScreen(BLACK);
-            display.setTextColor(WHITE, BLACK);
-            sprintf(string, "Teensy\n Synth");
+            //display.fillScreen(BLACK);
+            // display.setTextColor(WHITE, BLACK);
+            //display.setCursor(0, 0);
+            sprintf(string, "Teensy  ");
+            sprintf(string2, " Synth  ");
+            //display.setCursor(1, 0);
+            //display.print(" Synth   ");
             changecounter = millis();
           }
           display.setTextColor(WHITE, BLACK);
           display.setCursor(4, 48);
-          display.print("        ");
+          display.print("          ");
           display.display();
           return;
         }
@@ -349,112 +405,152 @@ void myControlChange(byte channel, byte control, byte value) {
   changecounter = millis();
   switch (control) {
 
+    case 7:
+      mainmix.gain(0, (value * DIV127));
+      sysExVal[0] = value;
+      sprintf(string, " Volume ");
+      sprintf(string2, " %2.0f%% ", ((value * DIV127) * 100));
+      break;
+
     case 100:
       mixer1.gain(0, (value * DIV127));
-      sprintf(string, "OSC1 Gan\n%2.0f%%", ((value * DIV127) * 100));
+      sysExVal[1] = value;
+      sprintf(string, "OSC1 Gain");
+      sprintf(string2, " %2.0f%% ", ((value * DIV127) * 100));
       break;
 
     case 101:
       mixer1.gain(1, (value * DIV127));
-      sprintf(string, "OSC2 Gan\n%2.0f%%", ((value * DIV127) * 100));
+      sysExVal[2] = value;
+      sprintf(string, "OSC2 Gain");
+      sprintf(string2, " %2.0f%% ", ((value * DIV127) * 100));
       break;
 
     case 102:
       mixer1.gain(2, (value * DIV127));
-      sprintf(string, "Noise\n%2.0f%%", ((value * DIV127) * 100));
+      sysExVal[3] = value;
+      sprintf(string, " Noise");
+      sprintf(string2, " %2.0f%% ", ((value * DIV127) * 100));
       break;
 
     case 103:
       switch (value) {
         case 0:
           octave = 24;
-          sprintf(string, "OSC2\nOctave +2");
+          sprintf(string, "OSC2");
+          sprintf(string2, "Octave + 2");
           break;
         case 1:
           octave = 12;
-          sprintf(string, "OSC2\nOctave +1");
+          sprintf(string, "OSC2");
+          sprintf(string2, "Octave + 1");
           break;
         case 2:
           octave = 0;
-          sprintf(string, "OSC2\nOctave 0");
+          sprintf(string, "OSC2");
+          sprintf(string2, "Octave 0 ");
           break;
         case 3:
           octave = -12;
-          sprintf(string, "OSC2\nOctave -1");
+          sprintf(string, "OSC2");
+          sprintf(string2, "Octave - 1");
           break;
         case 4:
           octave = -24;
-          sprintf(string, "OSC2\nOctave -2");
+          sprintf(string, "OSC2");
+          sprintf(string2, "Octave - 2");
           break;
       }
       oscSet();
+      sysExVal[4] = value;
       break;
 
     case 104:
       envelope1.attack(3000 * (value * DIV127));
-      sprintf(string, "Attack\n%.0f", 3000 * (value * DIV127));
+      sysExVal[5] = value;
+      sprintf(string, " Attack");
+      sprintf(string2, " %.0f", 3000 * (value * DIV127));
       break;
 
     case 105:
       envelope1.decay(3000 * (value * DIV127));
-      sprintf(string, "Decay\n%.0f", 3000 * (value * DIV127));
+      sysExVal[6] = value;
+      sprintf(string, " Decay");
+      sprintf(string2, "%.0f", 3000 * (value * DIV127));
       break;
 
     case 106:
       envelope1.sustain(value * DIV127);
-      sprintf(string, "Sustain\n%2.0f%%", (value * DIV127) * 100);
+      sysExVal[7] = value;
+      sprintf(string, " Sustain");
+      sprintf(string2, " %2.0f%% ", (value * DIV127) * 100);
       break;
 
     case 107:
       envelope1.release(3000 * (value * DIV127));
-      sprintf(string, "Release\n%.0f", 3000 * (value * DIV127));
+      sysExVal[8] = value;
+      sprintf(string, " Release");
+      sprintf(string2, "%.0f", 3000 * (value * DIV127));
       break;
 
     case 108:
       switch (value) {
         case 0:
           waveform1.begin(WAVEFORM_SINE);
-          sprintf(string, "OSC1\nSine");
+          sprintf(string, "Waveform1");
+          sprintf(string2, "Sine");
           break;
         case 1:
           waveform1.begin(WAVEFORM_TRIANGLE);
-          sprintf(string, "OSC1\nTriangle");
+          sprintf(string, "Waveform1");
+          sprintf(string2, "Triangle");
           break;
         case 2:
           waveform1.begin(WAVEFORM_SAWTOOTH);
-          sprintf(string, "OSC1\nSawtooth");
+          sprintf(string, "Waveform1");
+          sprintf(string2, "Sawtooth");
           break;
         case 3:
           waveform1.begin(WAVEFORM_PULSE);
-          sprintf(string, "OSC1\nPulse");
+          sprintf(string, "Waveform1");
+          sprintf(string2, "Pulse  ");
           break;
       }
+      sysExVal[9] = value;
       break;
 
     case 109:
       switch (value) {
         case 0:
           waveform2.begin(WAVEFORM_SINE);
-          sprintf(string, "OSC2\nSine");
+          sprintf(string, "Wavefrm2");
+          sprintf(string2, "Sine");
           break;
         case 1:
           waveform2.begin(WAVEFORM_TRIANGLE);
-          sprintf(string, "OSC2\nTriangle");
+          sprintf(string, "Waveform2");
+          sprintf(string2, "Triangle ");
           break;
         case 2:
           waveform2.begin(WAVEFORM_SAWTOOTH);
-          sprintf(string, "OSC2\nSawtooth");
+          sprintf(string, "Wavefrpm2");
+          sprintf(string2, "Sawtooth");
           break;
         case 3:
           waveform2.begin(WAVEFORM_PULSE);
-          sprintf(string, "OSC2\nPulse");
+          sprintf(string, "Waveform2");
+          sprintf(string2, " Pulse   ");
           break;
       }
+      sysExVal[10] = value;
       break;
 
     case 110:
       detuneFactor = 1 - (0.05 * (value * DIV127));
-      sprintf(string, "Detune\n%f", 1 - (0.05 * (value * DIV127)));
+      //sprintf(string, "Detune\n % f", 1 - (0.05 * (value * DIV127)));
+      sysExVal[11] = value;
+      sprintf(string, " Detune  ");
+      sprintf(string2, " %d", value );
       oscSet();
       break;
 
@@ -462,17 +558,25 @@ void myControlChange(byte channel, byte control, byte value) {
       FILfactor = value * DIV127;
       FILfreq = 10000 * (value * DIV127);
       if (LFOmodeSelect < 1 || LFOmodeSelect > 5)filter1.frequency(FILfreq);
-      sprintf(string, "Filter\n%d", FILfreq);
+      sysExVal[12] = value;
+      sprintf(string, "Filter Fr");
+      sprintf(string2, " %d", FILfreq);
       break;
 
     case 112:
       filter1.resonance((4.3 * (value * DIV127)) + 0.7);
-      sprintf(string, "Resonanc\n%2.0f", (value * DIV127) * 100);
+      sysExVal[13] = value;
+      sprintf(string, "Filter Re");
+      sprintf(string2, " %2.0f", (value * DIV127) * 100);
       break;
 
     case 113:
-      if (value <= 12 && value > 0) bendRange = value;
-      sprintf(string, "Bend Rng\n%d", value);
+      if (value <= 12 && value > 0) {
+        bendRange = value;
+        sysExVal[14] = value;
+        sprintf(string, "Bend Rang");
+        sprintf(string2, " %d", value);
+      }
       break;
 
     case 114:
@@ -480,40 +584,88 @@ void myControlChange(byte channel, byte control, byte value) {
         float xSpeed = value * DIV127;
         xSpeed = pow(100, (xSpeed - 1));
         LFOspeed = (70000 * xSpeed);
-        sprintf(string, "LFO Sped\n%d", LFOspeed);
+        sysExVal[15] = value;
+        sprintf(string, "LFO Speed");
+        sprintf(string2, " %d", LFOspeed);
         break;
       }
 
     case 115:
       LFOdepth = value * DIV127;
-      sprintf(string, "LFO Dpth\n%2.0f", (value * DIV127) * 100);
+      sysExVal[16] = value;
+      sprintf(string, "LFO Depth");
+      sprintf(string2, " %2.0f", (value * DIV127) * 100);
       break;
 
     case 116:
       LFOmodeSelect = value;
+      sysExVal[17] = value;
       switch (value) {
         case 0:
-          sprintf(string, "LFO\nOff");
+          sprintf(string, "LFO fltr ");
+          sprintf(string2, "Off      ");
           break;
 
         case 1:
-          sprintf(string, "LFO\nFree");
+          sprintf(string, "LFO fltr ");
+          sprintf(string2, "Free     ");
           break;
 
         case 2:
-          sprintf(string, "LFO\nDown");
+          sprintf(string, "LFO fltr ");
+          sprintf(string2, "Down     ");
           break;
 
         case 3:
-          sprintf(string, "LFO\nUp");
+          sprintf(string, "LFO fltr");
+          sprintf(string2, "Up");
           break;
 
         case 4:
-          sprintf(string, "LFO\n1-down");
+          sprintf(string, "LFO fltr ");
+          sprintf(string2, "1 - down ");
           break;
 
         case 5:
-          sprintf(string, "LFO\n1 - up");
+          sprintf(string, "LFO fltr ");
+          sprintf(string2, "1 - up   ");
+          break;
+
+        case 6:
+          break;
+
+        case 7:
+          break;
+
+
+        case 8:
+          sprintf(string, "LFO ptch ");
+          sprintf(string2, "Off      ");
+          break;
+
+        case 9:
+          sprintf(string, "LFO ptch ");
+          sprintf(string2, "Free      ");
+          break;
+
+        case 10:
+          sprintf(string, "LFO ptch ");
+          sprintf(string2, "Down     ");
+          break;
+
+        case 11:
+          sprintf(string, "LFO ptch ");
+          sprintf(string2, "Up       ");
+          break;
+
+        case 12:
+          sprintf(string, "LFO ptch  ");
+          sprintf(string2, "1 - down  ");
+          break;
+
+        case 13:
+          sprintf(string, "LFO ptch  ");
+          sprintf(string2, "1 - up    ");
           break;
       } break;
   }
