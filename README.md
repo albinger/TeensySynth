@@ -1,6 +1,7 @@
 # TeensySynth
-an arduino teensy based synthesizer originally from Notes and Volts
-##Changes from the original version:
+An arduino teensy based synthesizer originally from Notes and Volts
+
+## Changes from the original version:
 * sdd1306 oled module used for display
   * oled runs on i2c along with audio board saving many pins.
   * moved display updates to a timed code block rather than real time so incoming midi scrolls didn't bog down system
