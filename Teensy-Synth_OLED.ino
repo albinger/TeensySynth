@@ -172,11 +172,11 @@ void setup() {
   display.setTextSize(2);
   display.setTextColor(WHITE, BLACK);
   display.setTextWrap(false);
-  sprintf(string, "Teensy  \n Synth  ");
+  sprintf(string, " Teensy  \n  Synth  ");
   //display.clearDisplay();
 
   encoder = new ClickEncoder(1, 0, 2);
-  encoder->setAccelerationEnabled(0);  // we don't need to accellerate through the menu, someday.
+  encoder->setAccelerationEnabled(1);  
   Timer1.initialize(1000);
   Timer1.attachInterrupt(timerIsr);
   last = 0;
@@ -270,6 +270,9 @@ void loop() {
     display.setCursor(0, 0);
     if (shift) {
       display.setTextColor(BLACK, WHITE);
+      encoder->setAccelerationEnabled(0);
+    }else{
+      encoder->setAccelerationEnabled(1);
     }
     display.println(string);
     display.setTextColor(WHITE, BLACK);
@@ -364,8 +367,8 @@ void keyBuff(byte note, bool playNote) {
             //display.fillScreen(BLACK);
             // display.setTextColor(WHITE, BLACK);
             //display.setCursor(0, 0);
-            sprintf(string, "Teensy  ");
-            sprintf(string2, " Synth  ");
+            sprintf(string, " Teensy ");
+            sprintf(string2, "  Synth ");
             //display.setCursor(1, 0);
             //display.print(" Synth   ");
             changecounter = millis();
@@ -438,12 +441,12 @@ void myControlChange(byte channel, byte control, byte value) {
         case 0:
           octave = 24;
           sprintf(string, "OSC2");
-          sprintf(string2, "Octave + 2");
+          sprintf(string2, "Octave +2");
           break;
         case 1:
           octave = 12;
           sprintf(string, "OSC2");
-          sprintf(string2, "Octave + 1");
+          sprintf(string2, "Octave +1");
           break;
         case 2:
           octave = 0;
@@ -453,12 +456,12 @@ void myControlChange(byte channel, byte control, byte value) {
         case 3:
           octave = -12;
           sprintf(string, "OSC2");
-          sprintf(string2, "Octave - 1");
+          sprintf(string2, "Octave -1");
           break;
         case 4:
           octave = -24;
           sprintf(string, "OSC2");
-          sprintf(string2, "Octave - 2");
+          sprintf(string2, "Octave -2");
           break;
       }
       oscSet();
