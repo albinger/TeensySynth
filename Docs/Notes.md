@@ -9,7 +9,7 @@
   * every so often I reset the global variables to say "teensy synth" on the display.  If you are turning knobs this gets overwritten with the updates otherwise most of the time you are playing you get to see the name of the synth.
 
 * added rotary click encoder code
-  * top row will switch to inverted colors when in setting choice.  rotating encoder will cycle through available setetings.
+  * top row will switch to inverted colors when in setting choice.  rotating encoder will cycle through available settings.
   * top row will switch to normal non-inverted colors when in adjust mode.  Currently selected setting will be altered.
 
 * Playing note name is displayed on the 4th row of the display.  
