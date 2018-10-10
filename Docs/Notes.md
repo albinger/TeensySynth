@@ -1,4 +1,4 @@
-# Andrew's mode to TeensySynth
+# Andrew's mod to TeensySynth
 
 
 ## Changes from the original version:
