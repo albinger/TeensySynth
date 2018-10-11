@@ -28,7 +28,7 @@ AudioFilterStateVariable filter1;        //xy=770,130
 AudioEffectEnvelope      envelope1;      //xy=933,131
 AudioMixer4              mainmix;         //xy=1094,94
 AudioOutputI2S           i2s1;           //xy=1236,83
-AudioConnection          patchCord1(drum1, 0, mixer1, 3);
+AudioConnection          patchCord1(drum1, 0, mainmix, 1);
 AudioConnection          patchCord2(waveform2, 0, mixer1, 1);
 AudioConnection          patchCord3(waveform1, 0, mixer1, 0);
 AudioConnection          patchCord4(pink1, 0, mixer1, 2);
@@ -55,6 +55,7 @@ const float DIV127 = (1.0 / 127.0);
 float detuneFactor = 1;
 float bendFactor = 1;
 int bendRange = 2;
+int modwheel = 0;
 
 unsigned int LFOspeed = 2000;
 float LFOpitch = 1;
@@ -74,7 +75,9 @@ int16_t last, value;
 int shift = 0;
 
 byte sysExVal[] = {
+
   127, // volume
+  4, //modwheel
   127, //osc 1 gain
   127, //osc 2 gain
   0,   //noise gain
@@ -95,7 +98,9 @@ byte sysExVal[] = {
 };
 
 const char* sysExNam[] {
+
   " Volume  ",
+  " Modwheel",
   "Osc1 gain",
   "Osc2 gain",
   " Noise   ",
@@ -115,7 +120,7 @@ const char* sysExNam[] {
   " LFO mode"
 };
 
-const byte CC[] = { 7, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116 };
+const byte CC[] = {  7, 1, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116 };
 
 
 
@@ -160,9 +165,11 @@ void setup() {
 
   envelope1.attack(0);
   envelope1.decay(0);
+  
   envelope1.sustain(1);
   envelope1.release(500);
   mainmix.gain(0, 1.0);
+  mainmix.gain(1,.80);
 
   //Wire.setSDA(19);
   //Wire.setSCL(18);
@@ -176,7 +183,7 @@ void setup() {
   //display.clearDisplay();
 
   encoder = new ClickEncoder(1, 0, 2);
-  encoder->setAccelerationEnabled(1);  
+  encoder->setAccelerationEnabled(1);
   Timer1.initialize(1000);
   Timer1.attachInterrupt(timerIsr);
   last = 0;
@@ -206,60 +213,71 @@ void loop() {
     } else if (value < 0) {
       menu--;
     }
-    if (menu > 17) {
+    if (menu > 36) {
       menu = 0;
     } else if (menu < 0) {
-      menu = 17;
+      menu = 36;
     }
 
     if (value != 0) {
 
 
 
-      sprintf(string, "%s", sysExNam[menu]);
-      sprintf(string2, "%d", sysExVal[menu]);
+      sprintf(string, "%s", sysExNam[menu / 2]);
+      sprintf(string2, "%d", sysExVal[menu / 2]);
     }
   } else {
     display.setTextColor(WHITE, BLACK);
     if (value != 0) {
-      if (sysExVal[menu] == 0 && value < 0) {
+      if (sysExVal[menu / 2] == 0 && value < 0) {
         value = 0;
       }
-      sysExVal[menu] += value;
-      switch (menu) {
-        case 4:
-          if ( sysExVal[4] > 4) {
-            sysExVal[4] = 4;
+      sysExVal[menu / 2] += value;
+      switch (menu / 2) {
+        
+        case 1:
+          if (sysExVal[menu / 2] > 17) {
+            sysExVal[menu / 2] = 17;
+          }
+          if(sysExVal[menu/2] == 1)
+          {
+            sysExVal[menu/2] = 2;
+          }
+          break;
+        
+        case 5:
+          if ( sysExVal[5] > 4) {
+            sysExVal[5] = 4;
           }
           break;
 
-        case 9:
-          if (sysExVal[menu] > 3) {
-            sysExVal[menu] = 3;
+        case 10:
+          if (sysExVal[menu / 2] > 3) {
+            sysExVal[menu / 2] = 3;
           }
-          break;
-        case  10:
-          if (sysExVal[menu] > 3) {
-            sysExVal[menu] = 3;
-          }
-
-
           break;
         case  11:
-          if (sysExVal[menu] > 13) {
-            sysExVal[menu] = 13;
+          if (sysExVal[menu / 2] > 3) {
+            sysExVal[menu / 2] = 3;
+          }
+
+
+          break;
+        case  12:
+          if (sysExVal[menu / 2] > 13) {
+            sysExVal[menu / 2] = 13;
           }
           break;
       }
 
-      if (sysExVal[menu] < 0) {
-        sysExVal[menu] = 0;
+      if (sysExVal[menu / 2] < 0) {
+        sysExVal[menu / 2] = 0;
       } else {
-        if (sysExVal[menu] > 127) {
-          sysExVal[menu] = 127;
+        if (sysExVal[menu / 2] > 127) {
+          sysExVal[menu / 2] = 127;
         }
 
-        myControlChange(7, CC[menu], sysExVal[menu]);
+        myControlChange(7, CC[menu / 2], sysExVal[menu / 2]);
       }
     }
   }
@@ -271,7 +289,7 @@ void loop() {
     if (shift) {
       display.setTextColor(BLACK, WHITE);
       encoder->setAccelerationEnabled(0);
-    }else{
+    } else {
       encoder->setAccelerationEnabled(1);
     }
     display.println(string);
@@ -292,7 +310,8 @@ void myNoteOn(byte channel, byte note, byte velocity) {
       display.print(" v: ");
       display.print(velocity);
       display.display();
-      drum1.frequency(550);
+      drum1.frequency(noteFreqs[note]);
+      drum1.secondMix(.5);
       drum1.length(400);
       drum1.noteOn();
     } else {
@@ -363,7 +382,7 @@ void keyBuff(byte note, bool playNote) {
         else {
           oscStop();
           int now = millis();
-          if ((now - changecounter) > 5000) {
+          if ((now - changecounter) > 8000) {
             //display.fillScreen(BLACK);
             // display.setTextColor(WHITE, BLACK);
             //display.setCursor(0, 0);
@@ -408,7 +427,11 @@ void myControlChange(byte channel, byte control, byte value) {
   changecounter = millis();
   switch (control) {
 
-    case 7:
+    case 1:  // standard MOD wheel
+
+      myControlChange(7, CC[modwheel], value);
+      break;
+    case 7:  // standard volume
       mainmix.gain(0, (value * DIV127));
       sysExVal[0] = value;
       sprintf(string, " Volume ");
