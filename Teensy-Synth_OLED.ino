@@ -71,7 +71,7 @@ int timecounter = 0;
 int changecounter = 0;
 
 ClickEncoder *encoder;
-int16_t last, value;
+int16_t lastVal, currentVal, value;
 int shift = 0;
 
 byte sysExVal[] = {
@@ -165,11 +165,11 @@ void setup() {
 
   envelope1.attack(0);
   envelope1.decay(0);
-  
+
   envelope1.sustain(1);
   envelope1.release(500);
   mainmix.gain(0, 1.0);
-  mainmix.gain(1,.80);
+  mainmix.gain(1, .80);
 
   //Wire.setSDA(19);
   //Wire.setSCL(18);
@@ -186,7 +186,7 @@ void setup() {
   encoder->setAccelerationEnabled(1);
   Timer1.initialize(1000);
   Timer1.attachInterrupt(timerIsr);
-  last = 0;
+  lastVal = 0;
 }
 
 
@@ -197,7 +197,24 @@ void loop() {
   LFOupdate(false, LFOmodeSelect, FILfactor, LFOdepth);
   int now = millis();
 
-  value = encoder->getValue();
+  currentVal = encoder->getValue();
+
+  if ((currentVal == 1) || (currentVal == -1)) {    // my encoder signals at a half of a physical click, this code eats every other impulse when moving slow.
+
+    if (lastVal == currentVal) {
+
+      value = currentVal;
+      lastVal = 0;
+    } else {
+      value = 0;
+      lastVal = currentVal;
+    }
+  } else if (currentVal == 0) {
+    value = 0;
+  } else {
+    value = currentVal;
+    lastVal = currentVal;
+  }
 
 
   ClickEncoder::Button b = encoder->getButton();
@@ -213,38 +230,38 @@ void loop() {
     } else if (value < 0) {
       menu--;
     }
-    if (menu > 36) {
+    if (menu > 18) {
       menu = 0;
     } else if (menu < 0) {
-      menu = 36;
+      menu = 18;
     }
 
     if (value != 0) {
 
 
 
-      sprintf(string, "%s", sysExNam[menu / 2]);
-      sprintf(string2, "%d", sysExVal[menu / 2]);
+      sprintf(string, "%s", sysExNam[menu]);
+      sprintf(string2, "%d", sysExVal[menu]);
     }
   } else {
     display.setTextColor(WHITE, BLACK);
     if (value != 0) {
-      if (sysExVal[menu / 2] == 0 && value < 0) {
+      if (sysExVal[menu] == 0 && value < 0) {
         value = 0;
       }
-      sysExVal[menu / 2] += value;
-      switch (menu / 2) {
-        
+      sysExVal[menu] += value;
+      switch (menu) {
+
         case 1:
-          if (sysExVal[menu / 2] > 17) {
-            sysExVal[menu / 2] = 17;
+          if (sysExVal[menu] > 17) {
+            sysExVal[menu] = 17;
           }
-          if(sysExVal[menu/2] == 1)
+          if (sysExVal[menu] == 1)
           {
-            sysExVal[menu/2] = 2;
+            sysExVal[menu] = 2;
           }
           break;
-        
+
         case 5:
           if ( sysExVal[5] > 4) {
             sysExVal[5] = 4;
@@ -252,32 +269,32 @@ void loop() {
           break;
 
         case 10:
-          if (sysExVal[menu / 2] > 3) {
-            sysExVal[menu / 2] = 3;
+          if (sysExVal[menu] > 3) {
+            sysExVal[menu] = 3;
           }
           break;
         case  11:
-          if (sysExVal[menu / 2] > 3) {
-            sysExVal[menu / 2] = 3;
+          if (sysExVal[menu] > 3) {
+            sysExVal[menu] = 3;
           }
 
 
           break;
         case  12:
-          if (sysExVal[menu / 2] > 13) {
-            sysExVal[menu / 2] = 13;
+          if (sysExVal[menu] > 13) {
+            sysExVal[menu] = 13;
           }
           break;
       }
 
-      if (sysExVal[menu / 2] < 0) {
-        sysExVal[menu / 2] = 0;
+      if (sysExVal[menu] < 0) {
+        sysExVal[menu] = 0;
       } else {
-        if (sysExVal[menu / 2] > 127) {
-          sysExVal[menu / 2] = 127;
+        if (sysExVal[menu] > 127) {
+          sysExVal[menu] = 127;
         }
 
-        myControlChange(7, CC[menu / 2], sysExVal[menu / 2]);
+        myControlChange(7, CC[menu], sysExVal[menu]);
       }
     }
   }
