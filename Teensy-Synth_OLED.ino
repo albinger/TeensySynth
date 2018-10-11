@@ -60,7 +60,7 @@ const float DIV127 = (1.0 / 127.0);
 float detuneFactor = 1;
 float bendFactor = 1;
 int bendRange = 2;
-int modwheel = 0;
+//int modwheel = 0;
 
 unsigned int LFOspeed = 2000;
 float LFOpitch = 1;
@@ -82,7 +82,7 @@ int shift = 0;
 byte sysExVal[] = {
 
   127, // volume
-  4, //modwheel
+  13, //modwheel
   127, //osc 1 gain
   127, //osc 2 gain
   0,   //noise gain
@@ -449,8 +449,8 @@ void myControlChange(byte channel, byte control, byte value) {
   switch (control) {
 
     case 1:  // standard MOD wheel
-
-      myControlChange(7, CC[modwheel], value);
+//modwheel = sysExVal[1]
+      myControlChange(7, CC[sysExVal[1]], value);
       break;
     case 7:  // standard volume
       mainmix.gain(0, (value * DIV127));
