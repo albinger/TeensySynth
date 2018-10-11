@@ -10,8 +10,8 @@ An arduino teensy based synthesizer originally from Notes and Volts
   * top row will switch to normal non-inverted colors when in adjust mode.  Currently selected setting will be altered.
 * CC messages will post MIDI updates to the display
 * Playing note name is displayed on the 4th row of the display
+* Added standard mod wheel handling (CC1) and the ability to change mod wheel paramater via menu or CC 117
   
 ## To Do:
-* finish ability to assign mod wheel via CC 
 * all of the arrays are in place to do patch saves/swaps
 * once patch saves are working I intend to make them sysex requests for an external device to update
