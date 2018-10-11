@@ -16,3 +16,6 @@
   * This is handled directly in the functions to play the notes.
   * I added an array with the note names so that I can display notes instead of MIDI note numbers.
   
+* If you play on MIDI channel 2 you will get the synthesized drum notes instead of the oscillators.  
+  * Not sure this is useful but it is entertaining.
+  * I may switch these to play audio files from the SD card so that my drup pads on my MPK mini play a drumset
