@@ -1,7 +1,11 @@
-// Teensy-Synth Part 8
+// Teensy-Synth OLED
+//  Update code by Andrew Albinger (Albinger Machine Company)
+//
+// adapted from:
 // LFO Test
 // By Notes and Volts
 // www.notesandvolts.com
+
 #define ENC_DECODER ENK_FLAKY
 #define ENC_HALFSTEP
 #include <Audio.h>
@@ -12,6 +16,7 @@
 #include <ClickEncoder.h>
 #include <TimerOne.h>
 
+// These are the libraries for the OLED Andrew is using.
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #define OLED_RESET -1
@@ -256,10 +261,6 @@ void loop() {
           if (sysExVal[menu] > 17) {
             sysExVal[menu] = 17;
           }
-          if (sysExVal[menu] == 1)
-          {
-            sysExVal[menu] = 2;
-          }
           break;
 
         case 5:
@@ -293,8 +294,11 @@ void loop() {
         if (sysExVal[menu] > 127) {
           sysExVal[menu] = 127;
         }
-
-        myControlChange(7, CC[menu], sysExVal[menu]);
+        if (menu == 1) {
+          myControlChange(7, 117, sysExVal[menu]);
+        } else {
+          myControlChange(7, CC[menu], sysExVal[menu]);
+        }
       }
     }
   }
@@ -638,6 +642,12 @@ void myControlChange(byte channel, byte control, byte value) {
       sysExVal[16] = value;
       sprintf(string, "LFO Depth");
       sprintf(string2, " %2.0f", (value * DIV127) * 100);
+      break;
+
+    case 117:
+      sysExVal[1] = value;
+      sprintf(string, " Modwheel");
+      sprintf(string2, sysExNam[value]);
       break;
 
     case 116:
