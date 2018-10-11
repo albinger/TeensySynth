@@ -11,3 +11,6 @@ An arduino teensy based synthesizer originally from Notes and Volts
 * CC messages will post MIDI updates to the display
 * Playing note name is displayed on the 4th row of the display
   
+## To Do:
+* all of the arrays are in place to do patch saves/swaps
+* once patch saves are working I intend to make them sysex requests for an external device to update
